@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>+1教你学营销2.0</title>
+    <title>+1教你学营销2.0 (完整版)</title>
     <!-- 引入 Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- 引入 React 和 Babel -->
@@ -37,6 +37,15 @@
         
         /* 移动端优化 */
         body { -webkit-tap-highlight-color: transparent; }
+        
+        /* 隐藏滚动条但保留功能 */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans selection:bg-blue-100 min-h-screen">
@@ -44,9 +53,10 @@
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect } = React;
+        const { useState, useEffect, useMemo } = React;
 
         // --- 图标组件 (SVG) ---
+        // 包含了原2.0图标以及新Quiz所需的图标(Zap, Globe等)
         const Icons = {
             BookOpen: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>,
             GraduationCap: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>,
@@ -59,160 +69,120 @@
             Settings: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.47a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>,
             Lightbulb: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><line x1="9" y1="18" x2="15" y2="18"/><line x1="10" y1="22" x2="14" y2="22"/><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 12 2a4.65 4.65 0 0 0-4.5 9.5c.7.8 1.15 1.59 1.41 2.5"/></svg>,
             RotateCw: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M21 2v6h-6"/><path d="M21 13a9 9 0 1 1-3-7.7L21 8"/></svg>,
-            MousePointer2: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="m12 6 6 6-6 6"/><path d="M22 12H2"/></svg>, // Simplified as pointer isn't crucial
+            MousePointer2: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="m12 6 6 6-6 6"/><path d="M22 12H2"/></svg>,
             Type: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>,
-            Trophy: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+            Trophy: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>,
+            // New Icons for Quiz
+            Zap: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>,
+            Globe: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>,
+            Award: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>,
+            RefreshCw: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>,
+            CheckCircle: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>,
+            XCircle: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
         };
 
         // --- 数据 (Data) ---
+        // 1. 简答题数据
         const qaDataRaw = [
-            {
-                id: 1,
-                question: "What is international marketing? (什么是国际营销？)",
-                answer: "International marketing is defined as the performance of business activities designed to plan price promote and direct the flow of a company's goods and services to consumers or users in more than one nation for a profit",
-                explanation: "国际营销被定义为企业为获取利润而在多个国家开展的商业活动，这些活动旨在计划、定价、促销和引导公司商品和服务流向消费者或用户。",
-                keywords: ["performance", "business", "activities", "plan", "price", "promote", "direct", "flow", "goods", "services", "profit"]
-            },
-            {
-                id: 2,
-                question: "What is global brand? (什么是全球品牌？)",
-                answer: "A global brand is defined as the worldwide use of a name term sign symbol design or combination thereof intended to identify goods or services of one seller and to differentiate them from those of competitors",
-                explanation: "全球品牌被定义为在全球范围内使用名称、术语、标志、符号（视觉和/或听觉）、设计或其组合，旨在识别某一卖家的商品或服务，并将其与竞争对手的商品或服务区分开来。",
-                keywords: ["worldwide", "use", "name", "term", "sign", "symbol", "design", "identify", "differentiate"]
-            },
-            {
-                id: 3,
-                question: "Quality definition dimensions? (质量的定义维度？)",
-                answer: "market perceived quality and performance quality",
-                explanation: "质量可以从两个维度来定义：(1) 市场感知质量 (market-perceived quality) 和 (2) 性能质量 (performance quality)。",
-                keywords: ["market", "perceived", "performance"]
-            },
-            {
-                id: 4,
-                question: "Five Elements of Culture (文化的五要素)",
-                answer: "values rituals symbols beliefs and thought processes",
-                explanation: "Values(价值观), Rituals(礼仪仪式), Symbols(符号), Beliefs(信仰), Thought processes(思维过程)。",
-                keywords: ["values", "rituals", "symbols", "beliefs", "thought", "processes"]
-            },
-            {
-                id: 5,
-                question: "6Cs of Channel (渠道的6C)",
-                answer: "Cost Capital Requirements Control Coverage Character and Continuity",
-                explanation: "Cost(成本), Capital Requirements(资本要求), Control(控制), Coverage(覆盖范围), Character(渠道特性), Continuity(持续性)。",
-                keywords: ["cost", "capital", "control", "coverage", "character", "continuity"]
-            },
-            {
-                id: 6,
-                question: "4Ps of Marketing Mix (营销组合4P)",
-                answer: "product price place and promotion",
-                explanation: "Product(产品), Price(价格), Place(地点/渠道), Promotion(促销)。",
-                keywords: ["product", "price", "place", "promotion"]
-            }
+            { id: 1, question: "What is international marketing? (什么是国际营销？)", answer: "International marketing is defined as the performance of business activities designed to plan price promote and direct the flow of a company's goods and services to consumers or users in more than one nation for a profit", explanation: "国际营销被定义为企业为获取利润而在多个国家开展的商业活动，这些活动旨在计划、定价、促销和引导公司商品和服务流向消费者或用户。", keywords: ["performance", "business", "activities", "plan", "price", "promote", "direct", "flow", "goods", "services", "profit"] },
+            { id: 2, question: "What is global brand? (什么是全球品牌？)", answer: "A global brand is defined as the worldwide use of a name term sign symbol design or combination thereof intended to identify goods or services of one seller and to differentiate them from those of competitors", explanation: "全球品牌被定义为在全球范围内使用名称、术语、标志、符号（视觉和/或听觉）、设计或其组合，旨在识别某一卖家的商品或服务，并将其与竞争对手的商品或服务区分开来。", keywords: ["worldwide", "use", "name", "term", "sign", "symbol", "design", "identify", "differentiate"] },
+            { id: 3, question: "Quality definition dimensions? (质量的定义维度？)", answer: "market perceived quality and performance quality", explanation: "质量可以从两个维度来定义：(1) 市场感知质量 (market-perceived quality) 和 (2) 性能质量 (performance quality)。", keywords: ["market", "perceived", "performance"] },
+            { id: 4, question: "Five Elements of Culture (文化的五要素)", answer: "values rituals symbols beliefs and thought processes", explanation: "Values(价值观), Rituals(礼仪仪式), Symbols(符号), Beliefs(信仰), Thought processes(思维过程)。", keywords: ["values", "rituals", "symbols", "beliefs", "thought", "processes"] },
+            { id: 5, question: "6Cs of Channel (渠道的6C)", answer: "Cost Capital Requirements Control Coverage Character and Continuity", explanation: "Cost(成本), Capital Requirements(资本要求), Control(控制), Coverage(覆盖范围), Character(渠道特性), Continuity(持续性)。", keywords: ["cost", "capital", "control", "coverage", "character", "continuity"] },
+            { id: 6, question: "4Ps of Marketing Mix (营销组合4P)", answer: "product price place and promotion", explanation: "Product(产品), Price(价格), Place(地点/渠道), Promotion(促销)。", keywords: ["product", "price", "place", "promotion"] }
         ];
 
+        // 2. 术语数据
         const termDataRaw = [
-            { id: 1, en: "segment", cn: "细分，部门分支" },
-            { id: 2, en: "target", cn: "目标" },
-            { id: 3, en: "positioning", cn: "定位" },
-            { id: 4, en: "marketer", cn: "发现、市场商人、市场营销人员" },
-            { id: 5, en: "marketing", cn: "满意、促销、营销" },
-            { id: 6, en: "marketplace", cn: "市场" },
-            { id: 7, en: "promotion", cn: "市场推广" },
-            { id: 8, en: "joint venture", cn: "合资企业" },
-            { id: 9, en: "demographic", cn: "人口统计" },
-            { id: 10, en: "marketing mix", cn: "营销组合" },
-            { id: 11, en: "standardization", cn: "标准化" },
-            { id: 12, en: "perceived", cn: "认知，可感知的" },
-            { id: 13, en: "revolution", cn: "革命" },
-            { id: 14, en: "evolution", cn: "演变" },
-            { id: 15, en: "processes", cn: "思维方式" },
-            { id: 16, en: "Learn ability", cn: "习得性" },
-            { id: 17, en: "co-ownership", cn: "共有性" },
-            { id: 18, en: "inherited", cn: "传承性" },
-            { id: 19, en: "self-orientation", cn: "以自我为中心的" },
-            { id: 20, en: "power distance index", cn: "权威指数" },
-            { id: 21, en: "uncertainty avoidance index", cn: "不确定性回避指数" },
-            { id: 22, en: "individualism/collective index", cn: "个人主义/集体指数" },
-            { id: 23, en: "relationship-oriented", cn: "以关系为导向" },
-            { id: 24, en: "information-oriented", cn: "以信息为导向" },
-            { id: 25, en: "yielding", cn: "产出" },
-            { id: 26, en: "low-context", cn: "低语境" },
-            { id: 27, en: "commit", cn: "承诺" },
-            { id: 28, en: "to conduct", cn: "做" },
-            { id: 29, en: "antimonopoly", cn: "反垄断" },
-            { id: 30, en: "premium", cn: "保险费" },
-            { id: 31, en: "quantitative", cn: "定量性的" },
-            { id: 32, en: "developing", cn: "制定" },
-            { id: 33, en: "gathering", cn: "收集" },
-            { id: 34, en: "defined as", cn: "被定义" },
-            { id: 35, en: "inflation", cn: "通货膨胀" },
-            { id: 36, en: "deflation", cn: "通货紧缩" },
-            { id: 37, en: "By market segment", cn: "市场细分" },
-            { id: 38, en: "Product segment", cn: "产品细分" },
-            { id: 39, en: "sampling", cn: "取样" },
-            { id: 40, en: "Advertising measurement", cn: "广告计量" },
-            { id: 41, en: "alternative", cn: "可选择的" },
-            { id: 42, en: "tangible", cn: "有形的" },
-            { id: 43, en: "intangible", cn: "无形的" },
-            { id: 44, en: "credit", cn: "信用" },
-            { id: 45, en: "scale", cn: "规模" },
-            { id: 46, en: "scope", cn: "范畴" },
-            { id: 47, en: "reputation", cn: "名誉" },
-            { id: 48, en: "franchising", cn: "特许经营" },
-            { id: 49, en: "perception", cn: "认知" },
-            { id: 50, en: "relationship marketing", cn: "关系营销" },
-            { id: 51, en: "blocked channels", cn: "专卖渠道" },
-            { id: 52, en: "competitive advantage", cn: "竞争优势" },
-            { id: 53, en: "global awareness", cn: "全球意识" },
-            { id: 54, en: "marketing concept", cn: "市场营销理念" },
-            { id: 55, en: "Free trade", cn: "自由贸易" },
-            { id: 56, en: "agreement", cn: "协定" },
-            { id: 57, en: "Special drawing rights", cn: "特别提款权" },
-            { id: 58, en: "IMF", cn: "国际货币基金组织" },
-            { id: 59, en: "Social Responsibility and Environment Management", cn: "社会责任与环境管理" },
-            { id: 60, en: "Population Decline and Aging", cn: "人口减少和老龄化" },
-            { id: 61, en: "Worker Shortage and Immigration", cn: "工人短缺和移民" },
-            { id: 62, en: "sustainable development", cn: "可持续发展" },
-            { id: 63, en: "social group", cn: "社会团体" },
-            { id: 64, en: "caste", cn: "（印度社会中的）种姓；印度的世袭阶级" },
-            { id: 65, en: "Cultural Borrowing", cn: "文化借鉴" },
-            { id: 66, en: "Socialization Adaptation", cn: "社会化适应" },
-            { id: 67, en: "Uncertainty Avoidance Index", cn: "不确定性避免指数" },
-            { id: 68, en: "Interpretive Knowledge", cn: "解释性知识" },
-            { id: 69, en: "subornation", cn: "收买（终身收买）" },
-            { id: 70, en: "lubrication", cn: "润滑，加油；油润" },
-            { id: 71, en: "extortion", cn: "敲诈, 勒索" },
-            { id: 72, en: "bribery, business Ethics, individualism", cn: "贿赂，商业道德，个人主义" },
-            { id: 73, en: "Corruption", cn: "腐败" },
-            { id: 74, en: "Cultural imperative", cn: "文化必要性" },
-            { id: 75, en: "silent language", cn: "沉默语言" },
-            { id: 76, en: "confiscation", cn: "没收" },
-            { id: 77, en: "sovereignty", cn: "主权" },
-            { id: 78, en: "domestication", cn: "驯化" },
-            { id: 79, en: "arbitration", cn: "仲裁" },
-            { id: 80, en: "intellectual property right", cn: "知识产权, 版权,专利" },
-            { id: 81, en: "quantitative research", cn: "定量研究" },
-            { id: 82, en: "analogy", cn: "类比" },
-            { id: 83, en: "strategic international alliances", cn: "战略国际联盟" },
-            { id: 84, en: "decentralized organization", cn: "分权制组织" },
-            { id: 85, en: "market-entry strategy", cn: "市场准入策略" },
-            { id: 86, en: "marketing mix", cn: "市场营销组合" },
-            { id: 87, en: "target market", cn: "目标市场" },
-            { id: 88, en: "Marketing plan", cn: "市场营销计划" },
-            { id: 89, en: "innovate", cn: "创新" },
-            { id: 90, en: "cultural barrier", cn: "文化障碍" },
-            { id: 91, en: "homologation", cn: "同质化" },
-            { id: 92, en: "Promotion strategy", cn: "促销战略" },
-            { id: 93, en: "GNP", cn: "国民生产总值" },
-            { id: 94, en: "Marketing channels", cn: "市场营销渠道" },
-            { id: 95, en: "middleman", cn: "中间商" },
-            { id: 96, en: "terminal", cn: "终端" },
-            { id: 97, en: "encourage", cn: "激励" },
-            { id: 98, en: "marketing management", cn: "销售管理" },
-            { id: 99, en: "recruit", cn: "招聘" },
-            { id: 100, en: "separation allowance", cn: "离职津贴" },
-            { id: 101, en: "pricing strategy", cn: "定价策略" },
-            { id: 102, en: "currency inflation", cn: "通货膨胀" }
+            { id: 1, en: "segment", cn: "细分，部门分支" }, { id: 2, en: "target", cn: "目标" }, { id: 3, en: "positioning", cn: "定位" }, { id: 4, en: "marketer", cn: "发现、市场商人、市场营销人员" }, { id: 5, en: "marketing", cn: "满意、促销、营销" }, { id: 6, en: "marketplace", cn: "市场" }, { id: 7, en: "promotion", cn: "市场推广" }, { id: 8, en: "joint venture", cn: "合资企业" }, { id: 9, en: "demographic", cn: "人口统计" }, { id: 10, en: "marketing mix", cn: "营销组合" }, { id: 11, en: "standardization", cn: "标准化" }, { id: 12, en: "perceived", cn: "认知，可感知的" }, { id: 13, en: "revolution", cn: "革命" }, { id: 14, en: "evolution", cn: "演变" }, { id: 15, en: "processes", cn: "思维方式" }, { id: 16, en: "Learn ability", cn: "习得性" }, { id: 17, en: "co-ownership", cn: "共有性" }, { id: 18, en: "inherited", cn: "传承性" }, { id: 19, en: "self-orientation", cn: "以自我为中心的" }, { id: 20, en: "power distance index", cn: "权威指数" }, { id: 21, en: "uncertainty avoidance index", cn: "不确定性回避指数" }, { id: 22, en: "individualism/collective index", cn: "个人主义/集体指数" }, { id: 23, en: "relationship-oriented", cn: "以关系为导向" }, { id: 24, en: "information-oriented", cn: "以信息为导向" }, { id: 25, en: "yielding", cn: "产出" }, { id: 26, en: "low-context", cn: "低语境" }, { id: 27, en: "commit", cn: "承诺" }, { id: 28, en: "to conduct", cn: "做" }, { id: 29, en: "antimonopoly", cn: "反垄断" }, { id: 30, en: "premium", cn: "保险费" }, { id: 31, en: "quantitative", cn: "定量性的" }, { id: 32, en: "developing", cn: "制定" }, { id: 33, en: "gathering", cn: "收集" }, { id: 34, en: "defined as", cn: "被定义" }, { id: 35, en: "inflation", cn: "通货膨胀" }, { id: 36, en: "deflation", cn: "通货紧缩" }, { id: 37, en: "By market segment", cn: "市场细分" }, { id: 38, en: "Product segment", cn: "产品细分" }, { id: 39, en: "sampling", cn: "取样" }, { id: 40, en: "Advertising measurement", cn: "广告计量" }, { id: 41, en: "alternative", cn: "可选择的" }, { id: 42, en: "tangible", cn: "有形的" }, { id: 43, en: "intangible", cn: "无形的" }, { id: 44, en: "credit", cn: "信用" }, { id: 45, en: "scale", cn: "规模" }, { id: 46, en: "scope", cn: "范畴" }, { id: 47, en: "reputation", cn: "名誉" }, { id: 48, en: "franchising", cn: "特许经营" }, { id: 49, en: "perception", cn: "认知" }, { id: 50, en: "relationship marketing", cn: "关系营销" }, { id: 51, en: "blocked channels", cn: "专卖渠道" }, { id: 52, en: "competitive advantage", cn: "竞争优势" }, { id: 53, en: "global awareness", cn: "全球意识" }, { id: 54, en: "marketing concept", cn: "市场营销理念" }, { id: 55, en: "Free trade", cn: "自由贸易" }, { id: 56, en: "agreement", cn: "协定" }, { id: 57, en: "Special drawing rights", cn: "特别提款权" }, { id: 58, en: "IMF", cn: "国际货币基金组织" }, { id: 59, en: "Social Responsibility and Environment Management", cn: "社会责任与环境管理" }, { id: 60, en: "Population Decline and Aging", cn: "人口减少和老龄化" }, { id: 61, en: "Worker Shortage and Immigration", cn: "工人短缺和移民" }, { id: 62, en: "sustainable development", cn: "可持续发展" }, { id: 63, en: "social group", cn: "社会团体" }, { id: 64, en: "caste", cn: "（印度社会中的）种姓；印度的世袭阶级" }, { id: 65, en: "Cultural Borrowing", cn: "文化借鉴" }, { id: 66, en: "Socialization Adaptation", cn: "社会化适应" }, { id: 67, en: "Uncertainty Avoidance Index", cn: "不确定性避免指数" }, { id: 68, en: "Interpretive Knowledge", cn: "解释性知识" }, { id: 69, en: "subornation", cn: "收买（终身收买）" }, { id: 70, en: "lubrication", cn: "润滑，加油；油润" }, { id: 71, en: "extortion", cn: "敲诈, 勒索" }, { id: 72, en: "bribery, business Ethics, individualism", cn: "贿赂，商业道德，个人主义" }, { id: 73, en: "Corruption", cn: "腐败" }, { id: 74, en: "Cultural imperative", cn: "文化必要性" }, { id: 75, en: "silent language", cn: "沉默语言" }, { id: 76, en: "confiscation", cn: "没收" }, { id: 77, en: "sovereignty", cn: "主权" }, { id: 78, en: "domestication", cn: "驯化" }, { id: 79, en: "arbitration", cn: "仲裁" }, { id: 80, en: "intellectual property right", cn: "知识产权, 版权,专利" }, { id: 81, en: "quantitative research", cn: "定量研究" }, { id: 82, en: "analogy", cn: "类比" }, { id: 83, en: "strategic international alliances", cn: "战略国际联盟" }, { id: 84, en: "decentralized organization", cn: "分权制组织" }, { id: 85, en: "market-entry strategy", cn: "市场准入策略" }, { id: 86, en: "marketing mix", cn: "市场营销组合" }, { id: 87, en: "target market", cn: "目标市场" }, { id: 88, en: "Marketing plan", cn: "市场营销计划" }, { id: 89, en: "innovate", cn: "创新" }, { id: 90, en: "cultural barrier", cn: "文化障碍" }, { id: 91, en: "homologation", cn: "同质化" }, { id: 92, en: "Promotion strategy", cn: "促销战略" }, { id: 93, en: "GNP", cn: "国民生产总值" }, { id: 94, en: "Marketing channels", cn: "市场营销渠道" }, { id: 95, en: "middleman", cn: "中间商" }, { id: 96, en: "terminal", cn: "终端" }, { id: 97, en: "encourage", cn: "激励" }, { id: 98, en: "marketing management", cn: "销售管理" }, { id: 99, en: "recruit", cn: "招聘" }, { id: 100, en: "separation allowance", cn: "离职津贴" }, { id: 101, en: "pricing strategy", cn: "定价策略" }, { id: 102, en: "currency inflation", cn: "通货膨胀" }
+        ];
+
+        // 3. Quiz 数据 (来自 14章后.html)
+        const quizDataRaw = [
+            // Chapter 14
+            { id: 1401, chapter: 14, correctIndex: 2, en: { q: "The _____ process includes the physical handling and distribution of goods, the passage of ownership (title), and the buying and selling negotiations between producers and middlemen and between middlemen and customers.", options: ["marketing", "logistics", "distribution", "shipping", "transportation"] }, cn: { q: "_____ 过程包括货物的实物处理和分销、所有权（所有权凭证）的转移，以及生产者与中间商之间、中间商与客户之间的买卖谈判。", options: ["营销 (marketing)", "物流 (logistics)", "分销 (distribution)", "运输 (shipping)", "交通 (transportation)"] } },
+            { id: 1402, chapter: 14, correctIndex: 2, en: { q: "Under the traditional distribution structure in international marketing, which of the following controls a fixed supply of goods that are sold at high prices to a small number of affluent customers?", options: ["exporter", "manufacturer", "importer", "a government broker", "cartel"] }, cn: { q: "在国际营销的传统分销结构下，下列哪一方控制着固定的货物供应，并将这些货物以高价出售给少数富裕客户？", options: ["出口商", "制造商", "进口商", "政府经纪人", "卡特尔"] } },
+            { id: 1403, chapter: 14, correctIndex: 3, en: { q: "Under the Japanese system of distribution, the government has put in place a series of laws that are designed to protect the foundation to the distribution system-the:", options: ["manufacturer", "wholesaler", "Norazi", "small retailer", "none of the above"] }, cn: { q: "在日本的分销体系下，政府制定了一系列法律，旨在保护分销体系的基础——即：", options: ["制造商", "批发商", "Norazi", "小型零售商", "以上都不是"] } },
+            { id: 1404, chapter: 14, correctIndex: 0, en: { q: "Control in the distribution channel is maintained by all of the following EXCEPT:", options: ["mandated retail pricing", "inventory financing", "cumulative rebates", "merchandise returns", "promotional support"] }, cn: { q: "分销渠道的控制通过以下所有方式维持，除了：", options: ["强制零售定价", "库存融资", "累计返利", "商品退货", "促销支持"] } },
+            { id: 1405, chapter: 14, correctIndex: 0, en: { q: "In China, it is illegal to compete with the Chinese postal service. Hence, FedEx and DHL have found that their traditional channel of distribution has been:", options: ["blocked", "outlawed", "closed except through bribery", "demolished", "determined to be non-existent"] }, cn: { q: "在中国，与中国邮政竞争是非法的。因此，联邦快递 (FedEx) 和 DHL 发现他们的传统分销渠道已经：", options: ["受阻 (blocked)", "被取缔", "除贿赂外全部关闭", "被拆除", "被认定不存在"] } },
+            { id: 1406, chapter: 14, correctIndex: 1, en: { q: "Who do agent middlemen represent with respect to title flow?", options: ["themselves", "the principal rather than themselves", "the broker", "the international logistics system", "none of the above"] }, cn: { q: "就所有权流向而言，代理中间商代表谁？", options: ["他们自己", "委托人而不是他们自己", "经纪人", "国际物流系统", "以上都不是"] } },
+            { id: 1407, chapter: 14, correctIndex: 3, en: { q: "Cindy Brown would like to export her company's products abroad; however, she has no skill in the area, no export department, and expects to do only a small volume of exporting at present. Which of the following should Cindy use given the circumstances as stated?", options: ["a trading company", "a complementary marketer", "a selling group", "an export management company", "a Webb-Pomerene Export Association"] }, cn: { q: "Cindy Brown 想要将公司的产品出口到国外；然而，她在这方面没有技能，没有出口部门，并且目前只打算做少量的出口。鉴于上述情况，Cindy 应该使用下列哪一种？", options: ["贸易公司", "互补营销商", "销售集团", "出口管理公司 (EMC)", "Webb-Pomerene 出口协会"] } },
+            { id: 1408, chapter: 14, correctIndex: 1, en: { q: "Which of the following pieces of legislation allows U.S. firms that produce similar products to band together to form export trading companies to distribute their goods without the penalty of violating monopoly practices?", options: ["Export-Import Banking Act", "Export Trading Company Act", "International Trade and Exporting Act", "Simm's Trading Company Act", "none of the above"] }, cn: { q: "下列哪项立法允许生产类似产品的美国公司联合起来组建出口贸易公司来分销其货物，而不会因违反垄断行为而受到惩罚？", options: ["进出口银行法", "出口贸易公司法", "国际贸易和出口法", "西姆斯贸易公司法", "以上都不是"] } },
+            { id: 1409, chapter: 14, correctIndex: 3, en: { q: "General Electric has been distributing merchandise from other suppliers for many years. Another name for this piggybacking marketing technique is:", options: ["partnership marketing", "side transaction marketing", "relationship marketing", "complementary marketing", "none of the above"] }, cn: { q: "通用电气 (GE) 多年来一直在分销来自其他供应商的商品。这种“搭便车”营销技术的另一个名称是：", options: ["合伙营销", "侧面交易营销", "关系营销", "互补营销 (complementary marketing)", "以上都不是"] } },
+            { id: 1410, chapter: 14, correctIndex: 1, en: { q: "Which of the following forms of agent has a short-term relationship with a company, covers only one or two markets, and operates on a straight commission basis?", options: ["Export management company", "Manufacturer's export agent", "Export merchant", "Norazi", "Export jobber"] }, cn: { q: "下列哪种形式的代理商与公司保持短期关系，仅覆盖一两个市场，并按纯佣金制运作？", options: ["出口管理公司", "制造商出口代理 (Manufacturer's export agent)", "出口商", "Norazi", "出口中间商"] } },
+            { id: 1411, chapter: 14, correctIndex: 4, en: { q: "_____ deal mostly in commodities; they do not take physical possession of goods but assume responsibility for arranging transportation. Because this person works on a job-lot basis, they do not provide a particularly attractive distribution alternative for most producers.", options: ["Export management company", "Manufacturer's export agent", "Export merchant", "Norazi", "Export jobber"] }, cn: { q: "_____ 主要经营大宗商品；他们不实际占有货物，但承担安排运输的责任。因为这类人是按批次工作的，所以对于大多数生产者来说，他们并不是一个特别有吸引力的分销选择。", options: ["出口管理公司", "制造商出口代理", "出口商", "Norazi", "出口中间商 (Export jobber)"] } },
+            { id: 1412, chapter: 14, correctIndex: 3, en: { q: "Which of the following international distribution agents, brokers, or middlemen is known for dealing in contraband?", options: ["Comprador", "Dealer", "Export merchant", "Norazi", "Export jobber"] }, cn: { q: "下列哪种国际分销代理、经纪人或中间商以经营违禁品而闻名？", options: ["买办", "经销商", "出口商", "Norazi", "出口中间商"] } },
+            { id: 1413, chapter: 14, correctIndex: 0, en: { q: "A _____ conducts business within a foreign nation under an exclusive contract arrangement with the parent company. This middleman takes possession of goods, has a continuing relationship with buyers and sellers and is good at providing market information.", options: ["Comprador", "Dealer", "Export merchant", "Norazi", "Export jobber"] }, cn: { q: "_____ 在与母公司的独家合同安排下在外国开展业务。这个中间商占有货物，与买卖双方保持持续的关系，并且擅长提供市场信息。", options: ["买办 (Comprador)", "经销商", "出口商", "Norazi", "出口中间商"] } },
+            { id: 1414, chapter: 14, correctIndex: 3, en: { q: "There are two kinds of channel cost. One is the capital or investment cost of developing the channel. Which of the following would be the best description of the other form of channel cost?", options: ["promotion of the channel", "elimination of waste", "government lobbying", "continuing cost of maintaining the channel", "none of the above"] }, cn: { q: "渠道成本有两种。一种是开发渠道的资本或投资成本。下列哪一项是对另一种形式的渠道成本的最佳描述？", options: ["渠道的推广", "消除浪费", "政府游说", "维护渠道的持续成本", "以上都不是"] } },
+            { id: 1415, chapter: 14, correctIndex: 4, en: { q: "When using the Internet as a distribution channel, the e-vendor must be concerned with a variety of issues. Which of the following would not be among those issues?", options: ["culture", "adaptation", "local contact", "promotion", "all of the above are important issues for the e-vendor"] }, cn: { q: "当使用互联网作为分销渠道时，电子供应商必须关注各种问题。下列哪一项不属于这些问题？", options: ["文化", "适应", "本地联系", "促销", "以上所有都是电子供应商的重要问题"] } },
+
+            // Chapter 15
+            { id: 1501, chapter: 15, correctIndex: 1, en: { q: "Within the exporting process, all of the following would be examples of documentation EXCEPT:", options: ["bill of lading", "packing insurance", "consular invoice", "special certificates", "export declaration"] }, cn: { q: "在出口过程中，以下所有各项都是单证（文件）的例子，除了：", options: ["提单", "包装保险 (packing insurance)", "领事发票", "特殊证书", "出口报关单"] } },
+            { id: 1502, chapter: 15, correctIndex: 4, en: { q: "Which of the following would be considered to be a nontariff barrier?", options: ["taxes", "validated licenses", "commercial invoice", "bill of lading", "exchange permits"] }, cn: { q: "下列哪一项被认为是非关税壁垒？", options: ["税收", "验证许可证", "商业发票", "提单", "外汇许可证 (exchange permits)"] } },
+            { id: 1503, chapter: 15, correctIndex: 0, en: { q: "_____ may be designed to conserve scarce goods for home consumption or to control the flow of strategic goods to actual or potential enemies.", options: ["Export regulations", "Import regulations", "Tariffs", "Taxes", "none of the above"] }, cn: { q: "_____ 旨在为国内消费保留稀缺商品，或控制战略物资流向实际或潜在的敌人。", options: ["出口管制 (Export regulations)", "进口管制", "关税", "税收", "以上都不是"] } },
+            { id: 1504, chapter: 15, correctIndex: 1, en: { q: "_____ may be imposed to protect health, conserve foreign exchange, serve as economic reprisals, protect home industry, or provide revenue in the form of tariffs.", options: ["Export regulations", "Import regulations", "Boycotts", "Taxes", "none of the above"] }, cn: { q: "实施 _____ 可能是为了保护健康、保存外汇、作为经济报复、保护国内产业，或以关税形式提供收入。", options: ["出口管制", "进口管制 (Import regulations)", "抵制", "税收", "以上都不是"] } },
+            { id: 1505, chapter: 15, correctIndex: 3, en: { q: "If a company wishes to export goods abroad it must first get a(n):", options: ["permission from the government", "license to do business abroad", "tax permit from its state where the business resides", "Export Control Classification Number (ECCN)", "none of the above is the first step in exportation"] }, cn: { q: "如果一家公司希望将货物出口到国外，它首先必须获得：", options: ["政府许可", "在国外开展业务的执照", "业务所在地州的税务许可证", "出口管制分类编码 (ECCN)", "以上都不是出口的第一步"] } },
+            { id: 1506, chapter: 15, correctIndex: 1, en: { q: "The _____ helps a company decide if the good to exported needs a license to export or re-export the good to a particular destination.", options: ["Export Control Classification Number", "Commerce Country Chart (CCC)", "the Red Flag Internet Alert System", "A, B, and C", "none of the above"] }, cn: { q: "_____ 帮助公司决定出口货物是否需要许可证才能出口或再出口到特定目的地。", options: ["出口管制分类编码", "商务部国家图表 (CCC)", "红旗互联网警报系统", "A, B 和 C", "以上都不是"] } },
+            { id: 1507, chapter: 15, correctIndex: 3, en: { q: "If the customer or purchasing agent is reluctant to offer information about the end use of a product or the customer has little or no business background, this should mean which of the following to a would-be-exporter?", options: ["the customer will pay a higher price", "pricing will not be an issue", "distribution will be difficult", "a red flag is raised and the exporter should be alerted", "communication will be a problem"] }, cn: { q: "如果客户或采购代理不愿提供有关产品最终用途的信息，或者客户几乎没有或根本没有商业背景，这对于想要出口的人来说意味着什么？", options: ["客户会支付更高的价格", "定价不会是问题", "分销将很困难", "升起红旗，出口商应保持警惕", "沟通将成为问题"] } },
+            { id: 1508, chapter: 15, correctIndex: 1, en: { q: "Which of the following enables exporters that have authorization to submit license applications via the Internet for commodities except supercomputers to all free-world destinations?", options: ["STELA", "ELAIN", "ERIC", "SNAP", "none of the above"] }, cn: { q: "下列哪一项允许获得授权的出口商通过互联网提交除超级计算机以外的商品到所有自由世界目的地的许可证申请？", options: ["STELA", "ELAIN", "ERIC", "SNAP", "以上都不是"] } },
+            { id: 1509, chapter: 15, correctIndex: 3, en: { q: "_____ is an alternative to paper license submissions, enables the exporter to submit export and reexport applications, high-performance computer notices, and commodity classification requests via the Internet.", options: ["STELA", "ELAIN", "ERIC", "SNAP", "none of the above"] }, cn: { q: "_____ 是纸质许可证提交的替代方案，允许出口商通过互联网提交出口和再出口申请、高性能计算机通知和商品分类请求。", options: ["STELA", "ELAIN", "ERIC", "SNAP", "以上都不是"] } },
+            { id: 1510, chapter: 15, correctIndex: 1, en: { q: "An ad valorem duty is a form of a(n):", options: ["tax", "tariff", "license", "quota", "embargo"] }, cn: { q: "从价税是 _____ 的一种形式。", options: ["税收", "关税 (tariff)", "许可证", "配额", "禁运"] } },
+            { id: 1511, chapter: 15, correctIndex: 4, en: { q: "Especially troublesome to exporters are exchange restrictions placed on the flow of currency by some foreign countries. These restrictions come in the form of what is called a(n):", options: ["tax", "tariff", "license", "quota", "exchange permit"] }, cn: { q: "对出口商来说特别麻烦的是一些外国对货币流动施加的外汇限制。这些限制以所谓的 _____ 形式出现。", options: ["税收", "关税", "许可证", "配额", "外汇许可证 (exchange permit)"] } },
+            { id: 1512, chapter: 15, correctIndex: 4, en: { q: "If a country wanted to place an absolute restriction against trade with a country it would impose which of the following?", options: ["a tax", "a tariff", "a license requirement", "an exchange permit", "a boycott"] }, cn: { q: "如果一个国家想要对与另一个国家的贸易实施绝对限制，它会实施下列哪一项？", options: ["税收", "关税", "许可证要求", "外汇许可证", "抵制 (boycott)"] } },
+            { id: 1513, chapter: 15, correctIndex: 2, en: { q: "A foreign importer agrees to pay CIF. What has the importer agreed to pay?", options: ["a currency exchange fee", "a free on board freight fee", "cost, insurance, and freight to the destination", "freight to a named port", "only freight for the duration of the distribution process"] }, cn: { q: "一位外国进口商同意支付 CIF。进口商同意支付什么？", options: ["货币兑换费", "离岸运费", "成本、保险费和运至目的地的运费 (Cost, Insurance, and Freight)", "运至指定港口的运费", "仅分销过程期间的运费"] } },
+            { id: 1514, chapter: 15, correctIndex: 1, en: { q: "Another name for an in-bond company that is common on the Mexican border with the United States is:", options: ["a freight-forwarder", "Maquiladoras", "an ex-im company", "a black marketer", "none of the above"] }, cn: { q: "在美国和墨西哥边境常见的保税公司的另一个名称是：", options: ["货运代理", "马奎拉多纳工厂 (Maquiladoras)", "进出口公司", "黑市商人", "以上都不是"] } },
+            { id: 1515, chapter: 15, correctIndex: 2, en: { q: "With respect to exporting to the United States, the _____ rule states that sea carriers must provide U.S. Customs a detailed description (manifest) of contents of containers bound for the United States at least one day before the container is loaded on to a ship that will transport the cargo.", options: ["9/11", "anti-terrorist", "24-hour", "controlled substances rule", "none of the above"] }, cn: { q: "关于向美国出口，_____ 规则规定，海运承运人必须在集装箱装上运输货物的船舶之前至少一天，向美国海关提供运往美国的集装箱内容的详细说明（舱单）。", options: ["9/11", "反恐", "24小时 (24-hour)", "受控物质规则", "以上都不是"] } },
+
+            // Chapter 16
+            { id: 1601, chapter: 16, correctIndex: 3, en: { q: "Which of the following terms is considered to be the general catch-all term used when advertising, sales promotion, trade shows, personal selling, direct selling, and public relations are brought together to unify an organization's promotion effort?", options: ["global promotion", "communication promotion", "nonpersonal communication", "integrated marketing communication", "synergistic promotion"] }, cn: { q: "当广告、销售促进、贸易展览、人员销售、直接销售和公共关系被整合在一起，以统一组织的促销努力时，下列哪个术语被认为是通用的统称？", options: ["全球促销", "沟通促销", "非人员沟通", "整合营销传播 (IMC)", "协同促销"] } },
+            { id: 1602, chapter: 16, correctIndex: 2, en: { q: "If you were looking for a promotion element that would be a marketing activity that has as its purpose the stimulation of consumer purchases and improvement of retailer or middleman effectiveness and cooperation, you should look for:", options: ["advertising", "public relations", "sales promotion", "direct selling", "personal selling"] }, cn: { q: "如果你正在寻找一种促销元素，其目的是刺激消费者购买并提高零售商或中间商的效率和合作，你应该寻找：", options: ["广告", "公共关系", "销售促进 (sales promotion)", "直接销售", "人员销售"] } },
+            { id: 1603, chapter: 16, correctIndex: 1, en: { q: "Wayne Rodgers has a unique job... gets the press to cover positive aspects... arranges press tours... prepares reaction statements... Which of the following promotion functions is Mr. Rodgers engaged in?", options: ["advertising", "public relations", "sales promotion", "direct selling", "personal selling"] }, cn: { q: "Wayne Rodgers 的工作很独特... 让媒体报道积极方面... 安排媒体参观... 准备回应声明... Rodgers 先生从事的是下列哪种促销职能？", options: ["广告", "公共关系 (public relations)", "销售促进", "直接销售", "人员销售"] } },
+            { id: 1604, chapter: 16, correctIndex: 4, en: { q: "Mickey Trent works for a new Internet Web site... She is interested in securing more corporate advertising... If she wanted to start at the top and contact the largest advertiser in the world, which of the following companies would she contact?", options: ["Unilever", "Ford Motor Co.", "Coca-Cola", "Walt Disney", "Procter & Gamble"] }, cn: { q: "Mickey Trent 为一家新网站工作... 她想获得更多企业广告... 如果她想从顶级入手，联系世界上最大的广告主，她应该联系哪家公司？", options: ["联合利华", "福特汽车", "可口可乐", "华特迪士尼", "宝洁 (Procter & Gamble)"] } },
+            { id: 1605, chapter: 16, correctIndex: 2, en: { q: "Matching an international advertising campaign with cultural uniqueness in foreign markets is always a challenge. Which of the following task steps would be the first step that the international marketer should undertake to make sure that advertising would be culturally consistent in various markets around the world?", options: ["specify the communication goals", "develop the most effective message for the target market selected", "perform marketing research", "compose and secure a budget", "test manager's cultural sensitivity"] }, cn: { q: "将国际广告活动与国外市场的文化独特性相匹配始终是一个挑战。为了确保广告在世界各地市场上保持文化一致性，国际营销人员应采取的第一个步骤是？", options: ["明确沟通目标", "为选定的目标市场开发最有效的信息", "进行市场调研", "编制并确保预算", "测试经理的文化敏感性"] } },
+            { id: 1606, chapter: 16, correctIndex: 0, en: { q: "If an international marketing executive with a product message to communicate were to attempt matching to any of the five international communication process steps listed, in which step would initial matching take place?", options: ["an information source", "encoding", "a message channel", "decoding", "a receiver"] }, cn: { q: "如果一位有产品信息要传达的国际营销主管试图匹配所列的五个国际沟通过程步骤中的任何一个，初始匹配会发生在哪个步骤？", options: ["信息源 (an information source)", "编码", "信息渠道", "解码", "接收者"] } },
+            { id: 1607, chapter: 16, correctIndex: 4, en: { q: "In which of the following steps of the international communication process model would a message's effectiveness be checked?", options: ["noise", "encoding", "a message channel", "decoding", "feedback"] }, cn: { q: "在国际沟通过程模型的下列哪个步骤中，会检查信息的有效性？", options: ["噪音", "编码", "信息渠道", "解码", "反馈 (feedback)"] } },
+            { id: 1608, chapter: 16, correctIndex: 0, en: { q: "Morgan Barnes is finding increasingly difficult to concentrate... class seems to always be talking... announcements... other teachers... Which of the following communication process steps is most likely in action in the story told above?", options: ["noise", "encoding", "a message channel", "decoding", "feedback"] }, cn: { q: "Morgan Barnes 发现越来越难集中注意力... 班级总是在说话... 广播通知... 其他老师打扰... 上述故事中最可能体现的是哪个沟通过程步骤？", options: ["噪音 (noise)", "编码", "信息渠道", "解码", "反馈"] } },
+            { id: 1609, chapter: 16, correctIndex: 2, en: { q: "Many international markets (countries) ban using direct or indirect statements about competitors in advertisements. Which of the following terms would most directly be affected by such bans?", options: ["market segmentation", "public relations", "comparison advertising", "subliminal advertising", "sales promotion"] }, cn: { q: "许多国际市场（国家）禁止在广告中使用关于竞争对手的直接或间接陈述。下列哪个术语最直接地受到此类禁令的影响？", options: ["市场细分", "公共关系", "比较广告 (comparison advertising)", "潜意识广告", "销售促进"] } },
+            { id: 1610, chapter: 16, correctIndex: 3, en: { q: "Linguistic limitations abound in international advertising. Which of the following would be potential limitation areas that must be considered by communication and advertising executives as they design international campaigns?", options: ["different languages in different countries", "different languages or dialects within one country", "subtler problems of linguistic nuance and vernacular", "A, B, and C are correct", "none of the above are correct"] }, cn: { q: "国际广告中存在大量的语言限制。在设计国际广告活动时，沟通和广告主管必须考虑哪些潜在的限制领域？", options: ["不同国家的不同语言", "一个国家内的不同语言或方言", "语言细微差别和方言的微妙问题", "A, B 和 C 都正确", "以上都不正确"] } },
+            { id: 1611, chapter: 16, correctIndex: 0, en: { q: "According to one advertising executive, the reason that most international advertising is almost uniformly dreadful is that:", options: ["people don't understand language and culture", "copywriters have never cared to use any language except English when designing ads", "international ads are just plain primitive", "most people in international markets are illiterate", "none of the above explains the problem"] }, cn: { q: "据一位广告主管称，大多数国际广告几乎都很糟糕的原因是：", options: ["人们不理解语言和文化", "文案撰写人在设计广告时从不关心使用英语以外的任何语言", "国际广告都很原始", "国际市场上大多数人都是文盲", "以上都不能解释这个问题"] } },
+            { id: 1612, chapter: 16, correctIndex: 1, en: { q: "In which of the following countries is satellite TV a very popular alternative to other forms of TV transmission (this country leads all others with respect to satellite TV usage)?", options: ["Poland", "Germany", "United States", "Japan", "Israel"] }, cn: { q: "在下列哪个国家，卫星电视是其他电视传输形式的一种非常流行的替代方案（该国在卫星电视使用方面领先于所有其他国家）？", options: ["波兰", "德国", "美国", "日本", "以色列"] } },
+            { id: 1613, chapter: 16, correctIndex: 4, en: { q: "In which of the following countries are there only 5 national daily newspapers (primarily because of the difficulty of producing a newspaper in this country's native language)?", options: ["Uruguay", "Poland", "Turkey", "Israel", "Japan"] }, cn: { q: "在下列哪个国家，只有 5 份全国性日报（主要是因为用该国母语制作报纸很困难）？", options: ["乌拉圭", "波兰", "土耳其", "以色列", "日本"] } },
+            { id: 1614, chapter: 16, correctIndex: 4, en: { q: "In which of the following countries does almost every home in major cities have a television (most adults in these cities view television and listen to radio daily)?", options: ["Uruguay", "Poland", "Russia", "Israel", "China"] }, cn: { q: "在下列哪个国家，主要城市的几乎每个家庭都有一台电视（这些城市的大多数成年人每天都看电视和听广播）？", options: ["乌拉圭", "波兰", "俄罗斯", "以色列", "中国"] } },
+            { id: 1615, chapter: 16, correctIndex: 0, en: { q: "If you wanted to retain the largest international advertising agency, which of the following would you want to retain?", options: ["Omnicom Group", "Interpublic Group", "WPP Group", "Publicis Groupe", "Dentsu"] }, cn: { q: "如果你想聘请最大的国际广告代理公司，你会选择下列哪一家？", options: ["宏盟集团 (Omnicom Group)", "埃培智集团 (Interpublic Group)", "WPP 集团", "阳狮集团 (Publicis Groupe)", "电通 (Dentsu)"] } },
+
+            // Chapter 17
+            { id: 1701, chapter: 17, correctIndex: 2, en: { q: "A company's most direct tie to the customer is through:", options: ["advertising", "the Internet", "the salesperson", "public relations", "warranties"] }, cn: { q: "公司与客户最直接的联系是通过：", options: ["广告", "互联网", "销售人员", "公共关系", "保修"] } },
+            { id: 1702, chapter: 17, correctIndex: 3, en: { q: "What is the first step in managing a sales force?", options: ["a compensation package", "a benefits package", "goals and objectives evaluation", "the design of the sales force", "none of the above"] }, cn: { q: "管理销售队伍的第一步是什么？", options: ["薪酬方案", "福利方案", "目标和目的评估", "销售队伍的设计", "以上都不是"] } },
+            { id: 1703, chapter: 17, correctIndex: 0, en: { q: "When a salesperson goes abroad, represents his or her company to foreign markets, lives in those foreign markets, and immerses him or herself in those cultures, the salesperson is called a(n):", options: ["expatriate", "local national", "third-country national", "domestic", "internationalist"] }, cn: { q: "当销售人员出国，在国外市场代表其公司，居住在这些国外市场，并融入这些文化时，该销售人员被称为：", options: ["外派人员 (expatriate)", "当地国民", "第三国国民", "国内人员", "国际主义者"] } },
+            { id: 1704, chapter: 17, correctIndex: 4, en: { q: "All of the following are considered to be disadvantages of using expatriates for a company's international sales force EXCEPT:", options: ["cultural barriers", "legal barriers", "high cost", "the number of qualified personnel willing to live abroad", "the usually low pay and prestige associated with being an expatriate"] }, cn: { q: "以下所有都被认为是使用外派人员作为公司国际销售队伍的缺点，除了：", options: ["文化障碍", "法律障碍", "高成本", "愿意在国外生活的合格人员数量", "与外派人员相关的通常较低的薪酬和声望"] } },
+            { id: 1705, chapter: 17, correctIndex: 1, en: { q: "Benz Chemicals is considering a move to the United States... chosen to use _____ as its sales force. The primary reason for the choice is that this group has the ability to transcend both cultural and legal barriers.", options: ["expatriates", "local nationals", "third-country nationals", "virtual nationals", "mercenaries"] }, cn: { q: "Benz Chemicals 正考虑进军美国... 选择使用 _____ 作为其销售队伍。做出这一选择的主要原因是该群体有能力跨越文化和法律障碍。", options: ["外派人员", "当地国民 (local nationals)", "第三国国民", "虚拟国民", "雇佣兵"] } },
+            { id: 1706, chapter: 17, correctIndex: 4, en: { q: "If a company were to decide to hire local nationals to serve as its sales force in a foreign market, which of the following would be considered to be the chief disadvantage for doing this?", options: ["their high cost", "their unwillingness to work hard", "the poor quality of their work", "their lack of incentive", "the tendency of headquarters personnel to ignore their advice"] }, cn: { q: "如果一家公司决定雇用当地国民作为其在国外市场的销售队伍，下列哪一项被认为是这样做主要缺点？", options: ["他们的高成本", "他们不愿努力工作", "他们工作质量差", "他们缺乏激励", "总部人员倾向于忽视他们的建议"] } },
+            { id: 1707, chapter: 17, correctIndex: 2, en: { q: "Gert Schmidt is a German national that lives in Argentina... Kraft Foods recently hired Herr Schmidt to represent it in some rather difficult preliminary sales negotiations... What would be the best description of Herr Schmidt's role?", options: ["expatriate", "local national", "third-country national", "virtual expatriate", "mercenary"] }, cn: { q: "Gert Schmidt 是一名居住在阿根廷的德国公民... 卡夫食品最近聘请施密特先生代表其进行一些相当困难的初步销售谈判... 对施密特先生角色的最佳描述是什么？", options: ["外派人员", "当地国民", "第三国国民 (third-country national)", "虚拟外派人员", "雇佣兵"] } },
+            { id: 1708, chapter: 17, correctIndex: 0, en: { q: "Which of the following is a prime requisite (according to the text) for expatriate and third-country nationals who intend to represent companies in the international marketplace?", options: ["maturity", "intellectual capacity", "knowledge of the Internet and wireless communication", "knowledge of logistics", "a law degree"] }, cn: { q: "（根据课文）下列哪一项是打算在国际市场上代表公司的外派人员和第三国国民的首要必备条件？", options: ["成熟 (maturity)", "智力", "互联网和无线通信知识", "物流知识", "法律学位"] } },
+            { id: 1709, chapter: 17, correctIndex: 2, en: { q: "While Japanese and American sales personnel are often very different, they do agree on expected rewards from their companies... Which of the following ranks highest among reward expectations for both Japanese and American salespeople?", options: ["job security", "promotion", "merit increase in pay", "feeling of worthwhile accomplishment", "social recognition"] }, cn: { q: "虽然日本和美国的销售人员通常有很大不同，但他们在公司期望的奖励方面是一致的... 下列哪一项在日本和美国销售人员的奖励期望中排名最高？", options: ["工作保障", "晋升", "绩效加薪 (merit increase in pay)", "有价值的成就感", "社会认可"] } },
+            { id: 1710, chapter: 17, correctIndex: 1, en: { q: "When Jon Ramsey volunteered to go abroad... The expectations were payments of overseas premiums (called _____ since his family did not go along), all excess expenses, and allowances for tax differentials.", options: ["hardship allowances", "separation allowances", "hazardous duty pay", "kidnapping insurance", "anti-inflation allowances"] }, cn: { q: "当 Jon Ramsey 自愿出国时... 期望包括海外津贴（称为 _____，因为他的家人没有随行）、所有超额费用和税差津贴。", options: ["艰苦津贴", "分居津贴 (separation allowances)", "危险以此工资", "绑架保险", "反通胀津贴"] } },
+            { id: 1711, chapter: 17, correctIndex: 0, en: { q: "Which of the following countries has the most dissimilar global compensation plan when compared to plans offered by the United States to its sales personnel?", options: ["Japan", "France", "Germany", "United Kingdom", "Australia"] }, cn: { q: "与美国向其销售人员提供的计划相比，下列哪个国家的全球薪酬计划最不相似？", options: ["日本", "法国", "德国", "英国", "澳大利亚"] } },
+            { id: 1712, chapter: 17, correctIndex: 3, en: { q: "There are always a series of do's and don'ts when it comes to designing an effective global compensation plan. Which of the following would not be among the don'ts?", options: ["don't design the plan centrally and dictate to local offices", "don't create a similar framework for jobs with different responsibilities", "don't assume that cultural differences can be managed through the incentive plan", "don't permit local flexibility in implementation because control will be lost", "all of the above are correct don'ts"] }, cn: { q: "在设计有效的全球薪酬计划时，总有一系列的“做”与“不做”。下列哪一项不属于“不做”的范畴？（意即哪一个是错误的建议，或者是反话）", options: ["不要集中设计计划并指令当地办事处", "不要为职责不同的工作创建类似的框架", "不要假设可以通过激励计划管理文化差异", "不要允许执行中的地方灵活性，因为会失去控制", "以上所有都是正确的“不做”"] } },
+            { id: 1713, chapter: 17, correctIndex: 1, en: { q: "Rebecca Burton has decided to use the control tool of _____ to control the international sales force... gets almost all of her sales representative's attention quickly.", options: ["benefits packages", "the incentive system", "pride and accomplishment", "promotion", "ability to return to the United States"] }, cn: { q: "Rebecca Burton 决定使用 _____ 作为控制工具来控制国际销售队伍... 这几乎能迅速引起她所有销售代表的注意。", options: ["福利方案", "激励制度 (the incentive system)", "自豪感和成就感", "晋升", "返回美国的能力"] } },
+            { id: 1714, chapter: 17, correctIndex: 2, en: { q: "Milton Barnes has just respectfully refused an overseas assignment... used as his reason for refusal the most frequently cited reason for refusal of an overseas assignment. What is that reason?", options: ["low pay", "fear of not being able to do a good job", "concerns for career and family", "dislike for foreign cultures", "unwillingness to learn a new language and culture"] }, cn: { q: "Milton Barnes 刚刚礼貌地拒绝了海外派驻... 他的理由是拒绝海外派驻最常被引用的理由。那是什么理由？", options: ["低薪", "害怕做不好", "对职业和家庭的担忧", "不喜欢外国文化", "不愿学习新语言和文化"] } },
+            { id: 1715, chapter: 17, correctIndex: 2, en: { q: "Companies with the least amount of returnee attrition differ from those with the highest attrition in one significant way. What is that way?", options: ["pay of employees", "care for the family of the employee", "personal career planning for the expatriate", "requirement of future overseas assignments", "paying for medical leave for the employee"] }, cn: { q: "海归流失率最低的公司与流失率最高的公司在一个重要方面有所不同。那是什么？", options: ["员工薪酬", "对员工家庭的照顾", "外派人员的个人职业规划", "未来海外派驻的要求", "为员工支付病假"] } },
+
+            // Chapter 18
+            { id: 1801, chapter: 18, correctIndex: 1, en: { q: "When importers buy products from distributors in one country and sell them in another to distributors who are not part of the manufacturer's regular distribution system _____ has occurred.", options: ["indirect marketing", "parallel importing", "black marketing", "multi-channel exporting", "multi-channel importing"] }, cn: { q: "当进口商从一个国家的分销商那里购买产品，并将其卖给另一个国家不属于制造商常规分销系统的分销商时，就发生了 _____。", options: ["间接营销", "平行进口 (parallel importing)", "黑市交易", "多渠道出口", "多渠道进口"] } },
+            { id: 1802, chapter: 18, correctIndex: 2, en: { q: "Which of the following is another name for parallel importing?", options: ["indirect marketing", "black marketing", "gray marketing", "simultaneous marketing", "preferred marketing"] }, cn: { q: "下列哪一项是平行进口的另一个名称？", options: ["间接营销", "黑市交易", "灰色市场营销 (gray marketing)", "同步营销", "首选营销"] } },
+            { id: 1803, chapter: 18, correctIndex: 3, en: { q: "Which of the following practices can encourage parallel importing?", options: ["image advertising", "cooperative advertising", "comparative advertising", "exclusive distribution", "intensive distribution"] }, cn: { q: "下列哪种做法会助长平行进口？", options: ["形象广告", "合作广告", "比较广告", "独家分销 (exclusive distribution)", "密集分销"] } },
+            { id: 1804, chapter: 18, correctIndex: 0, en: { q: "If a firm is concerned only with the marginal or incremental cost of producing goods to be sold in overseas markets, it is engaged in _____ pricing.", options: ["variable-cost", "full-cost", "breakeven", "multi-level", "predatory"] }, cn: { q: "如果一家公司只关心在海外市场销售的产品的边际成本或增量成本，那么它正在从事 _____ 定价。", options: ["变动成本 (variable-cost)", "全成本", "盈亏平衡", "多层次", "掠夺性"] } },
+            { id: 1805, chapter: 18, correctIndex: 1, en: { q: "Which of the following pricing practices assumes a philosophy that no unit of a similar product is different from any other unit in terms of cost and that each unit must bear its full share of the total fixed and variable cost?", options: ["variable-cost pricing", "full-cost pricing", "breakeven pricing", "multi-level pricing", "predatory pricing"] }, cn: { q: "下列哪种定价做法假设在成本方面没有一个类似产品单位与其他单位不同，并且每个单位必须承担总固定成本和变动成本的全部份额？", options: ["变动成本定价", "全成本定价 (full-cost pricing)", "盈亏平衡定价", "多层次定价", "掠夺性定价"] } },
+            { id: 1806, chapter: 18, correctIndex: 1, en: { q: "Which of the following pricing strategies is known to stimulate market growth and capture market share by deliberately offering products at low prices?", options: ["skimming pricing", "penetration pricing", "demand-based pricing", "predatory pricing", "competition-based pricing"] }, cn: { q: "下列哪种定价策略通过故意提供低价产品来刺激市场增长并抢占市场份额？", options: ["撇脂定价", "渗透定价 (penetration pricing)", "基于需求的定价", "掠夺性定价", "基于竞争的定价"] } },
+            { id: 1807, chapter: 18, correctIndex: 2, en: { q: "When there is a disproportion in price between the exporting country and the importing country, this is called:", options: ["kinked demand", "monopolistic pricing", "price escalation", "price de-escalation", "price oligopoly"] }, cn: { q: "当出口国和进口国之间的价格不成比例时，这被称为：", options: ["弯折需求", "垄断定价", "价格升级 (price escalation)", "价格降级", "价格寡头"] } },
+            { id: 1808, chapter: 18, correctIndex: 4, en: { q: "When a domestic currency is weak which of the following export strategies is appropriate?", options: ["engage in nonprice competition", "shift sourcing and manufacturing overseas", "deal in countertrade", "trim profit margins and use marginal-cost pricing", "use full-costing approach"] }, cn: { q: "当本国货币疲软时，下列哪种出口策略是合适的？", options: ["参与非价格竞争", "将采购和制造转移到海外", "进行反向贸易", "削减利润率并使用边际成本定价", "使用全成本法 (use full-costing approach)"] } },
+            { id: 1809, chapter: 18, correctIndex: 2, en: { q: "All of the following are considered to be good export strategies to use when domestic currency is strong EXCEPT:", options: ["improve productivity and engage in vigorous cost reduction", "give priority to exports to relatively strong-currency countries", "minimize expenditures in local, host-country currency", "deal in countertrade with weak-currency countries", "all of the above are true export strategies to use when domestic currency is strong"] }, cn: { q: "以下所有都被认为是本国货币坚挺时使用的良好出口策略，除了：", options: ["提高生产力并大力降低成本", "优先出口到货币相对坚挺的国家", "尽量减少以当地东道国货币的支出", "与弱势货币国家进行反向贸易", "以上所有都是本国货币坚挺时使用的真实出口策略"] } },
+            { id: 1810, chapter: 18, correctIndex: 3, en: { q: "Which of the following is one of the main causes of price escalation for imported products?", options: ["distribution practices", "advertising costs", "productivity issues", "tariffs", "quality control"] }, cn: { q: "下列哪一项是进口产品价格升级的主要原因之一？", options: ["分销惯例", "广告成本", "生产力问题", "关税 (tariffs)", "质量控制"] } },
+            { id: 1811, chapter: 18, correctIndex: 4, en: { q: "If a marketer chooses to ship unassembled goods to a free trade zone in an importing country, the marketer can lower costs in all of the following ways EXCEPT:", options: ["tariffs may be lower", "labor costs may be lower", "ocean transportation rates are affected", "because of possible local content (such as packaging) tariffs may be further reduced", "all of the above are ways to lower costs"] }, cn: { q: "如果营销人员选择将未组装的货物运送到进口国的自由贸易区，营销人员可以通过以下所有方式降低成本，除了：（意即所有选项都是降低成本的方式）", options: ["关税可能较低", "劳动力成本可能较低", "海洋运输费率受影响", "由于可能的本地成分（如包装），关税可能会进一步降低", "以上所有都是降低成本的方法"] } },
+            { id: 1812, chapter: 18, correctIndex: 0, en: { q: "Mort Wills has decided that in order to penetrate the Canadian market he must sell his U.S. company's products below the cost of production... Which of the following terms describes what Mr. Wills is doing?", options: ["he is engaged in dumping", "he is engaged in preferential pricing", "he is engaged in skimming pricing", "he is engaged in demand-based pricing", "he is doing none of the above"] }, cn: { q: "Mort Wills 决定，为了进入加拿大市场，他必须以低于生产成本的价格销售其美国公司的产品... 下列哪个术语描述了 Wills 先生正在做的事情？", options: ["他正在从事倾销 (dumping)", "他正在从事优惠定价", "他正在从事撇脂定价", "他正在从事基于需求的定价", "以上都不是"] } },
+            { id: 1813, chapter: 18, correctIndex: 1, en: { q: "Even though the U.S. subsidizes wheat farmers... Canada uses _____ to ensure that the amount of wheat that can be imported from the United States is limited and will not be harmful to domestic markets.", options: ["pro-dumping legislation", "countervailing duties", "countertrade", "compensation deals", "countertrade"] }, cn: { q: "尽管美国补贴小麦种植者... 加拿大使用 _____ 来确保从美国进口的小麦数量受到限制，并且不会损害国内市场。", options: ["支持倾销立法", "反补贴税 (countervailing duties)", "反向贸易", "补偿交易", "反向贸易"] } },
+            { id: 1814, chapter: 18, correctIndex: 2, en: { q: "If a country that is importing demands that the exporting country accept the importing country's products in \"like exchange\" as payment for any goods shipped, the international pricing strategy being used by the importing country is called:", options: ["dumping", "countervailing duties", "countertrade", "compensation deals", "omni trade"] }, cn: { q: "如果进口国要求出口国接受进口国的产品作为任何装运货物的“等价交换”付款，那么进口国使用的国际定价策略被称为：", options: ["倾销", "反补贴税", "反向贸易 (countertrade)", "补偿交易", "全方位贸易"] } },
+            { id: 1815, chapter: 18, correctIndex: 4, en: { q: "Another name for intracompany pricing (prices for goods are transferred from a company's operations or sales units in one country to its units elsewhere) is:", options: ["penetration pricing", "skimming pricing", "demand-based pricing", "monopoly pricing", "transfer pricing"] }, cn: { q: "公司内部定价（即货物价格从公司在一个国家的运营或销售单位转移到其在其他地方的单位）的另一个名称是：", options: ["渗透定价", "撇脂定价", "基于需求的定价", "垄断定价", "转移定价 (transfer pricing)"] } }
         ];
 
         // --- 辅助函数 ---
@@ -252,8 +222,8 @@
                         </div>
                     </div>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 w-full max-w-2xl">
-                        {/* 术语卡片 */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 w-full max-w-5xl">
+                        {/* 1. 术语卡片 */}
                         <div className="relative group min-h-[160px]">
                             {!showTermOptions ? (
                                 <button 
@@ -302,7 +272,7 @@
                             )}
                         </div>
 
-                        {/* 简答题卡片 */}
+                        {/* 2. 简答题卡片 */}
                         <button 
                             onClick={() => onSelect('qa')}
                             className="group relative p-6 md:p-8 bg-white rounded-2xl shadow-lg active:scale-95 hover:shadow-xl transition-all border-2 border-transparent hover:border-purple-500 text-left overflow-hidden min-h-[160px]"
@@ -319,12 +289,30 @@
                                 开始复习 <Icons.ArrowRight size={16} className="ml-2 group-hover:translate-x-1 transition-transform" />
                             </div>
                         </button>
+
+                        {/* 3. 章节测试卡片 (新增 14章后) */}
+                        <button 
+                            onClick={() => onSelect('quiz')}
+                            className="group relative p-6 md:p-8 bg-white rounded-2xl shadow-lg active:scale-95 hover:shadow-xl transition-all border-2 border-transparent hover:border-indigo-500 text-left overflow-hidden min-h-[160px]"
+                        >
+                            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                                <Icons.Zap size={80} className="text-indigo-600" />
+                            </div>
+                            <h2 className="text-2xl font-bold text-gray-800 mb-2 flex items-center">
+                                <Icons.Zap className="mr-2 text-indigo-600" size={24} />
+                                章节速测
+                            </h2>
+                            <p className="text-gray-500 text-sm mb-4">Chapter 14-18 Speed Quiz</p>
+                            <div className="flex items-center text-indigo-600 font-medium text-sm mt-auto">
+                                开始挑战 <Icons.ArrowRight size={16} className="ml-2 group-hover:translate-x-1 transition-transform" />
+                            </div>
+                        </button>
                     </div>
                 </div>
             );
         };
 
-        // 术语模式组件
+        // 术语模式组件 (TermsView)
         const TermsView = ({ onBack, isShuffle, termMode }) => {
             const [questions, setQuestions] = useState([]);
             const [currentIndex, setCurrentIndex] = useState(0);
@@ -492,7 +480,7 @@
             );
         };
 
-        // 简答题模式组件
+        // 简答题模式组件 (QAView)
         const QAView = ({ onBack, isShuffle }) => {
             const [questions, setQuestions] = useState([]);
             const [currentIndex, setCurrentIndex] = useState(0);
@@ -718,6 +706,255 @@
             );
         };
 
+        // --- 新增: Quiz 模式组件 (QuizView) ---
+        const QuizView = ({ onBack, isShuffle }) => {
+            const [selectedChapter, setSelectedChapter] = useState(null); // null = all
+            const [hasStarted, setHasStarted] = useState(false);
+            const [questions, setQuestions] = useState([]);
+            const [currentIndex, setCurrentIndex] = useState(0);
+            const [showTranslation, setShowTranslation] = useState(false);
+            const [selectedOption, setSelectedOption] = useState(null); // index of user choice
+            const [isAnswered, setIsAnswered] = useState(false);
+            const [score, setScore] = useState(0);
+            const [showResult, setShowResult] = useState(false);
+
+            // 初始化题目
+            useEffect(() => {
+                let filtered = quizDataRaw;
+                if (selectedChapter) {
+                    filtered = quizDataRaw.filter(q => q.chapter === selectedChapter);
+                }
+                
+                // 乱序处理
+                if (isShuffle) {
+                    setQuestions(shuffleArray([...filtered]));
+                } else {
+                    setQuestions([...filtered]);
+                }
+            }, [selectedChapter, isShuffle, hasStarted]);
+
+            const currentQ = questions[currentIndex];
+
+            // 选项点击逻辑
+            const handleOptionClick = (idx) => {
+                if (isAnswered) return;
+                setSelectedOption(idx);
+                setIsAnswered(true);
+
+                if (idx === currentQ.correctIndex) {
+                    setScore(s => s + 1);
+                    // 自动跳转
+                    setTimeout(() => {
+                        handleNext();
+                    }, 800);
+                }
+            };
+
+            const handleNext = () => {
+                if (currentIndex < questions.length - 1) {
+                    setCurrentIndex(c => c + 1);
+                    setSelectedOption(null);
+                    setIsAnswered(false);
+                    setShowTranslation(false);
+                } else {
+                    setShowResult(true);
+                }
+            };
+
+            const handlePrev = () => {
+                if (currentIndex > 0) {
+                    setCurrentIndex(c => c - 1);
+                    // 以前做过的题目状态恢复比较复杂，简单处理为重置状态或不可修改
+                    // 简化版：回退仅供查看，暂不支持修改，但为了简单，这里重置状态让用户重选也没关系，或者提示已作答
+                    // 更加符合习惯的做法：回退后如果不保存状态会很怪。
+                    // 鉴于这是一个 "Speed Quiz"，我们简单处理：允许回退查看，但重置状态（或者不保留状态）。
+                    // 这里的逻辑模仿原文件：原文件 simple prev, resets state.
+                    setSelectedOption(null);
+                    setIsAnswered(false);
+                    setShowTranslation(false);
+                }
+            };
+
+            const handleRestart = () => {
+                setShowResult(false);
+                setHasStarted(false);
+                setScore(0);
+                setCurrentIndex(0);
+                setSelectedOption(null);
+                setIsAnswered(false);
+                setSelectedChapter(null);
+            };
+
+            // 1. 章节选择界面
+            if (!hasStarted) {
+                return (
+                    <div className="max-w-xl mx-auto pt-6 px-4 pb-20 animate-fade-in">
+                        <button onClick={onBack} className="text-gray-500 hover:text-gray-700 flex items-center mb-6">
+                             <Icons.ArrowLeft size={18} className="mr-1" /> 返回主菜单
+                        </button>
+                        
+                        <div className="text-center mb-8">
+                            <div className="bg-indigo-100 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                                <Icons.Zap size={32} className="text-indigo-600" />
+                            </div>
+                            <h2 className="text-2xl font-bold text-gray-800">选择章节</h2>
+                            <p className="text-gray-500 text-sm mt-2">共 75 道精选题目</p>
+                        </div>
+
+                        <div className="space-y-3">
+                            <button 
+                                onClick={() => { setSelectedChapter(null); setHasStarted(true); }}
+                                className="w-full p-4 bg-white border-2 border-indigo-100 hover:border-indigo-500 hover:bg-indigo-50 rounded-xl flex justify-between items-center transition-all group shadow-sm"
+                            >
+                                <span className="font-bold text-gray-800">全部章节 (All)</span>
+                                <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full">75题</span>
+                            </button>
+                            {[14, 15, 16, 17, 18].map(chap => (
+                                <button 
+                                    key={chap}
+                                    onClick={() => { setSelectedChapter(chap); setHasStarted(true); }}
+                                    className="w-full p-4 bg-white border border-gray-200 hover:border-indigo-500 hover:bg-gray-50 rounded-xl flex justify-between items-center transition-all"
+                                >
+                                    <span className="text-gray-700 font-medium">Chapter {chap}</span>
+                                    <Icons.ChevronRight size={16} className="text-gray-300" />
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                );
+            }
+
+            // 2. 结果界面
+            if (showResult) {
+                return (
+                    <div className="max-w-md mx-auto min-h-[80vh] flex flex-col items-center justify-center p-6 text-center animate-fade-in">
+                        <Icons.Award className="w-24 h-24 text-yellow-500 mb-6" />
+                        <h2 className="text-3xl font-bold text-gray-800 mb-2">练习完成!</h2>
+                        <p className="text-gray-500 mb-8">
+                            章节: {selectedChapter ? `Chapter ${selectedChapter}` : "全部章节"}
+                        </p>
+                        
+                        <div className="mb-10">
+                            <span className="text-6xl font-extrabold text-indigo-600 block mb-2">{score}</span>
+                            <span className="text-xl text-gray-400 font-medium">/ {questions.length} 分</span>
+                        </div>
+                        
+                        <div className="space-y-3 w-full">
+                            <button onClick={() => { setShowResult(false); setScore(0); setCurrentIndex(0); setHasStarted(true); setSelectedOption(null); setIsAnswered(false); }} className="flex items-center justify-center w-full py-4 px-6 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl transition-all font-bold shadow-lg">
+                                <Icons.RefreshCw className="w-5 h-5 mr-2" />
+                                再来一次
+                            </button>
+                            <button onClick={handleRestart} className="w-full py-4 px-6 text-gray-600 font-medium hover:bg-gray-100 rounded-xl transition-colors">
+                                返回章节选择
+                            </button>
+                        </div>
+                    </div>
+                );
+            }
+
+            // 3. 做题界面
+            if (!currentQ) return <div>Loading...</div>;
+
+            const progress = ((currentIndex + 1) / questions.length) * 100;
+
+            return (
+                <div className="max-w-2xl mx-auto pt-4 md:pt-8 px-2 md:px-0 pb-24">
+                    {/* Top Bar */}
+                    <div className="flex items-center justify-between mb-4">
+                        <button onClick={handleRestart} className="text-gray-500 hover:text-gray-700 p-2">
+                             <Icons.X size={20} />
+                        </button>
+                        <div className="flex flex-col items-center">
+                            <span className="text-xs font-bold text-indigo-600 uppercase tracking-widest">
+                                Chapter {currentQ.chapter}
+                            </span>
+                            <span className="text-xs text-gray-400">
+                                {currentIndex + 1} / {questions.length}
+                            </span>
+                        </div>
+                        <button 
+                            onClick={() => setShowTranslation(!showTranslation)}
+                            className={`flex items-center px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${showTranslation ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-600 border-gray-200'}`}
+                        >
+                            <Icons.Globe size={14} className="mr-1.5" />
+                            {showTranslation ? '原文' : '翻译'}
+                        </button>
+                    </div>
+
+                    {/* Progress Bar */}
+                    <div className="w-full bg-gray-200 rounded-full h-1.5 mb-6">
+                        <div className="bg-indigo-600 h-1.5 rounded-full transition-all duration-300" style={{ width: `${progress}%` }}></div>
+                    </div>
+
+                    {/* Question Card */}
+                    <div className="bg-white rounded-3xl shadow-lg overflow-hidden flex flex-col relative min-h-[400px]">
+                        <div className="p-6 md:p-8 flex-1 flex flex-col">
+                            {/* Question Text */}
+                            <div className="mb-8">
+                                <h2 className="text-lg md:text-xl font-semibold leading-relaxed text-gray-900 animate-fade-in">
+                                    {showTranslation ? currentQ.cn.q : currentQ.en.q}
+                                </h2>
+                            </div>
+
+                            {/* Options */}
+                            <div className="space-y-3">
+                                {(showTranslation ? currentQ.cn.options : currentQ.en.options).map((optText, idx) => {
+                                    let btnClass = "relative w-full p-4 rounded-xl flex items-center transition-all duration-200 border-2 text-left ";
+                                    let iconContent = <div className="w-6 h-6 rounded-full border-2 border-gray-300 text-gray-400 font-bold flex items-center justify-center text-xs mr-4 flex-shrink-0">{String.fromCharCode(65 + idx)}</div>;
+                                    
+                                    if (isAnswered) {
+                                        if (idx === currentQ.correctIndex) {
+                                            btnClass += "bg-green-50 border-green-500 text-green-900 font-medium";
+                                            iconContent = <Icons.CheckCircle className="w-6 h-6 text-green-600 mr-4 flex-shrink-0" />;
+                                        } else if (idx === selectedOption) {
+                                            btnClass += "bg-red-50 border-red-400 text-red-900";
+                                            iconContent = <Icons.XCircle className="w-6 h-6 text-red-500 mr-4 flex-shrink-0" />;
+                                        } else {
+                                            btnClass += "border-gray-100 opacity-50";
+                                        }
+                                    } else {
+                                        btnClass += "border-gray-100 hover:border-indigo-200 hover:bg-indigo-50 cursor-pointer text-gray-700";
+                                    }
+
+                                    return (
+                                        <button 
+                                            key={idx} 
+                                            onClick={() => handleOptionClick(idx)}
+                                            disabled={isAnswered}
+                                            className={btnClass}
+                                        >
+                                            {iconContent}
+                                            <span className="text-sm md:text-base">{optText}</span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    </div>
+
+                     {/* Footer Navigation */}
+                     <div className="fixed bottom-0 left-0 right-0 bg-white border-t p-4 flex justify-between items-center md:static md:bg-transparent md:border-0 md:p-0 z-20 shadow-lg md:shadow-none mt-6">
+                        <button 
+                            onClick={handlePrev}
+                            disabled={currentIndex === 0}
+                            className="text-gray-500 hover:text-gray-700 disabled:opacity-30 flex items-center font-medium px-4 py-2 rounded-lg active:bg-gray-100"
+                        >
+                            <Icons.ChevronLeft size={20} className="mr-1" /> 上一题
+                        </button>
+                        
+                        <button 
+                            onClick={handleNext}
+                            disabled={!isAnswered}
+                            className={`flex items-center px-8 py-3 rounded-xl font-bold transition-all transform ${isAnswered ? 'bg-indigo-600 text-white shadow-lg hover:bg-indigo-700' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}
+                        >
+                            {currentIndex === questions.length - 1 ? "完成" : "下一题"}
+                            <Icons.ChevronRight className="w-5 h-5 ml-2" />
+                        </button>
+                    </div>
+                </div>
+            );
+        };
+
         const App = () => {
             const [view, setView] = useState('menu'); 
             const [termMode, setTermMode] = useState('en-to-cn'); 
@@ -733,6 +970,7 @@
                     {view === 'menu' && <MainMenu onSelect={handleSelect} isShuffle={isShuffle} setIsShuffle={setIsShuffle} />}
                     {view === 'terms' && <TermsView onBack={() => setView('menu')} isShuffle={isShuffle} termMode={termMode} />}
                     {view === 'qa' && <QAView onBack={() => setView('menu')} isShuffle={isShuffle} />}
+                    {view === 'quiz' && <QuizView onBack={() => setView('menu')} isShuffle={isShuffle} />}
                 </div>
             );
         };
